@@ -10,7 +10,7 @@ main(int argc, char *argv[]) {
     exit(1);
   }
 
-  if(ioctl(fd, 1, 0) < 0)
+  if(ioctl(fd, 0, 0) < 0)
     fprintf(2, "ioctl failed\n");
 
   close(fd);

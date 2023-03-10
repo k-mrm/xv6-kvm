@@ -38,5 +38,7 @@ struct devsw {
 
 extern struct devsw devsw[];
 
-#define CONSOLE 1
-#define XV6KVM  2
+#define CONSOLE     1
+#define XV6KVM      2
+#define XV6KVM_VM   3
+#define XV6KVM_VCPU 4

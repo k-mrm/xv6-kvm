@@ -7,42 +7,66 @@
 #include "sleeplock.h"
 #include "file.h"
 #include "proc.h"
+#include "kvm.h"
 
-struct kvm_device {
-  struct spinlock lock;
-} kvmdev;
+struct xv6_kvm kvms[8];
+struct xv6_kvm_vcpu kvm_vcpus[16];
 
-static int
-kvmdevioctl(void *dev, int request, void *buf) {
-  (void)dev;
-  struct kvm_device *kvmd = &kvmdev;
+static struct xv6_kvm_vcpu *
+alloc_kvm_vcpu() {
+  struct xv6_kvm_vcpu *v;
 
-  printf("KERNEL: kvmdevioctl %p\n", kvmd);
+  for(v = kvm_vcpus; v < &kvm_vcpus[16]; v++) {
+    acquire(&v->lock);
+
+    if(v->used == 0)
+      goto found;
+    else
+      release(&v->lock);
+  }
 
   return 0;
+
+found:
+  v->used = 1;
+  release(&v->lock);
+
+  return v;
 }
 
-static int
-kvmdevread(int a, uint64 b, int c) {
-  (void)a;
-  (void)b;
-  (void)c;
+static struct xv6_kvm *
+alloc_kvm() {
+  struct xv6_kvm *kvm;
 
-  return -1;
-}
+  for(kvm = kvms; kvm < &kvms[8]; kvm++) {
+    acquire(&kvm->lock);
 
-static int
-kvmdevwrite(int a, uint64 b, int c) {
-  (void)a;
-  (void)b;
-  (void)c;
+    if(kvm->used == 0)
+      goto found;
+    else
+      release(&kvm->lock);
+  }
 
-  return -1;
+  return 0;
+
+found:
+  kvm->used = 1;
+  release(&kvm->lock);
+
+  return kvm;
 }
 
 void
-kvmdevinit(void) {
-  devsw[XV6KVM].read = kvmdevread;
-  devsw[XV6KVM].write = kvmdevwrite;
-  devsw[XV6KVM].ioctl = kvmdevioctl;
+xv6_kvm_init(void) {
+  struct xv6_kvm *kvm;
+  struct xv6_kvm_vcpu *v;
+
+  for(kvm = kvms; kvm < &kvms[8]; kvm++) {
+    initlock(&kvm->lock, "kvm");
+    kvm->used = 0;
+  }
+  for(v = kvm_vcpus; v < &kvm_vcpus[16]; v++) {
+    initlock(&v->lock, "kvm_vcpu");
+    v->used = 0;
+  }
 }
