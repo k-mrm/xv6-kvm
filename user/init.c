@@ -23,6 +23,10 @@ main(void)
   dup(0);  // stdout
   dup(0);  // stderr
 
+  if(open("kvm", O_RDWR) < 0) {
+    mknod("kvm", XV6KVM, 0);
+  }
+
   for(;;){
     printf("init: starting sh\n");
     pid = fork();

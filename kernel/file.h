@@ -33,8 +33,10 @@ struct inode {
 struct devsw {
   int (*read)(int, uint64, int);
   int (*write)(int, uint64, int);
+  int (*ioctl)(void *, int, void *);
 };
 
 extern struct devsw devsw[];
 
 #define CONSOLE 1
+#define XV6KVM  2
